@@ -66,6 +66,7 @@ This repository includes the CloudFormation template, Jupyter Notebook, and supp
 To test the application in web browser, run the following code in SageMaker Notebook:
 
 `cd streamlit`
+
 `streamlit run app.py --server.baseUrlPath="/proxy/absolute/8501`
 
 ![web_img](imgs/web_application.jpg)
