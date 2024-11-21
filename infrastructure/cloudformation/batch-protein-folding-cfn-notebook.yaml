@@ -22,7 +22,9 @@ Parameters:
     Description: Optional S3 Bucket Name
     Type: String
     Default: ""
-          
+  DynamoDBTableName:
+    Description: Name of the DynamoDB table
+    Type: String          
 
 Resources:
   ##################################################
@@ -115,6 +117,27 @@ Resources:
                 Effect: Allow
                 Resource:
                   - !Sub arn:aws:s3:::${S3BucketName}
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTableName}"
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:*
+                Resource: "*"
 
   BatchFoldNotebookInstance:
     Type: "AWS::SageMaker::NotebookInstance"

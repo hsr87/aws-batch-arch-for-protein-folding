@@ -224,6 +224,24 @@ Resources:
         CreateAWSServiceRoleForEC2Spot: GetAWSServiceRoleForEC2Spot.role_exists
         CreateAWSServiceRoleForEC2SpotFleet: GetAWSServiceRoleForEC2SpotFleet.role_exists
 
+  ExperimentTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${ApplicationName}-Experiment
+      AttributeDefinitions:
+        - AttributeName: ExperimentId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ExperimentId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: SolutionId
+          Value: SO9164
 
   Notebook:
     Type: "AWS::CloudFormation::Stack"
@@ -247,6 +265,8 @@ Resources:
           "Fn::GetAtt": Container.Outputs.CodeRepositoryURI    
         S3BucketName:
           Ref: BatchFoldS3Bucket
+        DynamoDBTableName:
+          !Ref ExperimentTable
 
   DownloadData:
     Type: "AWS::CloudFormation::Stack"
