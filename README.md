@@ -68,7 +68,7 @@ To test the application in web browser, run the following code in SageMaker Note
 `cd streamlit`
 `streamlit run app.py --server.baseUrlPath="/proxy/absolute/8501`
 
-![web_img](imags/web_application.jpg)
+![web_img](imgs/web_application.jpg)
 
 -----
 
