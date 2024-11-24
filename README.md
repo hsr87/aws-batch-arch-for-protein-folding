@@ -3,7 +3,7 @@
 ## Contents
 
 1. [Overview](#1-overview)  
-2. [Quick Start](#2-quick-start)  
+2. [Environment setup and quick start](#2-environment-setting-and-quick-start)  
 3. [Streamlit application](#3-streamlit-application)  
 4. [Advanced Configuration](#4-advanced-configuration)  
     4.1. [Optional CloudFormation Parameters](#41-optional-cloudformation-parameters)  
@@ -25,6 +25,7 @@
 -----
 
 ## 1. Overview
+![Agent for accessing cutting edge AIs in drug discovery easily](imgs/batch-protein-folding-arch.png)
 
 We've developed an agent-based framework that simplifies the use of life science and AI tools through a unified interface. Built using [Bedrock](https://aws.amazon.com/bedrock/), [AWS Batch](https://aws.amazon.com/batch/) and [LangGraph](https://www.langchain.com/langgraph), the system makes sophisticated life science tools like AlphaFold more accessible to researchers and developers. The framework includes basic GenAI chatbot capabilities while being designed to be extensible, allowing for easy integration of new tools as they become available. This makes complex computational biology tasks more manageable while providing a foundation for future expansion.
 
@@ -40,7 +41,7 @@ This repository includes the CloudFormation template, Jupyter Notebook, and supp
 
 -----
 
-## 2. Quick Start
+## 2. Environment setting
 
 1. Choose **Launch Stack** and (if prompted) log into your AWS account:
 
@@ -57,12 +58,14 @@ This repository includes the CloudFormation template, Jupyter Notebook, and supp
     ![Select Notebooks](imgs/notebook.png)  
 9. Select the **BatchFoldNotebookInstance** instance and then **Actions** > **Open JupyterLab**.
     ![Open BatchFoldNotebookInstance Notebook Instance ](imgs/notebook_instance.png)  
-10. Open the quick start notebook at `notebooks/quick-start-protein-folding.ipynb`.  
+11. Open the quick start notebook of agent at `notebooks/agent_for_drug_discovery.ipynb`.  
+    ![Open Quick Start Notebook](imgs/open_notebook_agent.png)  
+12. Open the quick start notebook of protein structure prediction at `notebooks/quick-start-protein-folding.ipynb`.  
     ![Open Quick Start Notebook](imgs/open_notebook.png)  
-11. Select the **conda_python_3** kernel.  
+13. Select the **conda_python_3** kernel.  
     ![Open Quick Start Notebook](imgs/select_kernel.png)  
-12. Run the notebook cells to create and analyze several protein folding jobs.  
-13. (Optional) To delete all provisioned resources from from your account, navigate to [Cloud Formation](https://console.aws.amazon.com/cloudformation), select your stack, and then **Delete**.
+14. Run the notebook cells to create and analyze several protein folding jobs.  
+15. (Optional) To delete all provisioned resources from from your account, navigate to [Cloud Formation](https://console.aws.amazon.com/cloudformation), select your stack, and then **Delete**.
 
 -----
 
