@@ -59,7 +59,7 @@ This repository includes the CloudFormation template, Jupyter Notebook, and supp
 9. Select the **BatchFoldNotebookInstance** instance and then **Actions** > **Open JupyterLab**.
     ![Open BatchFoldNotebookInstance Notebook Instance ](imgs/notebook_instance.png)  
 11. Open the quick start notebook of agent at `notebooks/agent_for_drug_discovery.ipynb`.  
-    ![Open Quick Start Notebook](imgs/open_notebook_agent.png)  
+    ![Open Quick Start Notebook](imgs/open_notebook_agent.jpg)  
 12. Open the quick start notebook of protein structure prediction at `notebooks/quick-start-protein-folding.ipynb`.  
     ![Open Quick Start Notebook](imgs/open_notebook.png)  
 13. Select the **conda_python_3** kernel.  
