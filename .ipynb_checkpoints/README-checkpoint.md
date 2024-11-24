@@ -1,10 +1,10 @@
-# AWS Batch Architecture for Protein Folding and Design
+# Agent for accessing cutting edge AIs in drug discovery easily
 
 ## Contents
 
 1. [Overview](#1-overview)  
 2. [Quick Start](#2-quick-start)  
-3. [Streamlit application](#4-streamlit-application)  
+3. [Streamlit application](#3-streamlit-application)  
 4. [Advanced Configuration](#4-advanced-configuration)  
     4.1. [Optional CloudFormation Parameters](#41-optional-cloudformation-parameters)  
     4.2. [Manual Data Download](#42-manual-data-download)  
@@ -12,7 +12,8 @@
 5. [Module Information](#5-module-information)  
     5.1. [JackHMMER](#51-jackhmmer)  
     5.2. [AlphaFold](#52-alphafold)  
-    5.3. [ESMFold](#46-esmfold)  
+    5.3. [ESMFold](#53-esmfold)  
+    5.4. [RFDiffusion](#54-rfdiffusion)  
 6. [Architecture Details](#6-architecture-details)  
     6.1. [Stack Creation Details](#61-stack-creation-details)  
     6.2. [Cost](#62-cost)  
@@ -28,9 +29,12 @@
 We've developed an agent-based framework that simplifies the use of life science and AI tools through a unified interface. Built using [Bedrock](https://aws.amazon.com/bedrock/), [AWS Batch](https://aws.amazon.com/batch/) and [LangGraph](https://www.langchain.com/langgraph), the system makes sophisticated life science tools like AlphaFold more accessible to researchers and developers. The framework includes basic GenAI chatbot capabilities while being designed to be extensible, allowing for easy integration of new tools as they become available. This makes complex computational biology tasks more manageable while providing a foundation for future expansion.
 
 Currently available tools: 
+
 [AlphaFold 2](https://deepmind.com/blog/article/alphafold-a-solution-to-a-50-year-old-grand-challenge-in-biology)
 
 [ESMFold](https://github.com/facebookresearch/esm)
+
+[RFDiffusion](https://github.com/RosettaCommons/RFdiffusion)
 
 This repository includes the CloudFormation template, Jupyter Notebook, and supporting code to run streamlit application for domain experts in life science to use complex AI tools easily.
 
@@ -163,11 +167,30 @@ The ESMFold citation is
 }
 ```
 
+### 5.4. RFDiffusion
+
+Commit [5606075d45bd23aa60785024b203ed6b0f6d2cd0](https://github.com/RosettaCommons/RFdiffusion/commit/5606075d45bd23aa60785024b203ed6b0f6d2cd0) from June 28, 2023.
+
+Please visit [https://github.com/RosettaCommons/RFdiffusion](https://github.com/RosettaCommons/RFdiffusion) for more information about the RFDiffusion algorithm.
+
+The RFDiffusion citation is
+
+```text
+@article{joseph_l_watson_broadly_2022,
+  title = {Broadly applicable and accurate protein design by integrating structure prediction networks and diffusion generative models},
+  url = {http://biorxiv.org/content/early/2022/12/14/2022.12.09.519842.abstract},
+  doi = {10.1101/2022.12.09.519842},
+  journal = {bioRxiv},
+  author = {{Joseph L. Watson} and {David Juergens} and {Nathaniel R. Bennett} and {Brian L. Trippe} and {Jason Yim} and {Helen E. Eisenach} and {Woody Ahern} and {Andrew J. Borst} and {Robert J. Ragotte} and {Lukas F. Milles} and {Basile I. M. Wicky} and {Nikita Hanikel} and {Samuel J. Pellock} and {Alexis Courbet} and {William Sheffler} and {Jue Wang} and {Preetham Venkatesh} and {Isaac Sappington} and {Susana Vázquez Torres} and {Anna Lauko} and {Valentin De Bortoli} and {Emile Mathieu} and {Regina Barzilay} and {Tommi S. Jaakkola} and {Frank DiMaio} and {Minkyung Baek} and {David Baker}},
+  year = {2022}
+}
+```
+
 -----
 
 ## 6. Architecture Details
 
-![AWS Batch Architecture for Protein Folding](imgs/batch-protein-folding-arch.png)
+![Agent for accessing cutting edge AIs in drug discovery easily](imgs/batch-protein-folding-arch.png)
 
 ### 6.1. Stack Creation Details
 

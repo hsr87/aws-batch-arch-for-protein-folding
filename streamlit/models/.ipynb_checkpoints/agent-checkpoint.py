@@ -15,6 +15,7 @@ from batchfold.batchfold_target import BatchFoldTarget
 from batchfold.jackhmmer_job import JackhmmerJob
 from batchfold.alphafold2_job import AlphaFold2Job
 from batchfold.esmfold_job import ESMFoldJob
+from batchfold.rfdiffusion_job import RFDiffusionJob
 
 from langchain_aws import ChatBedrockConverse
 from langchain_core.messages import AIMessage, HumanMessage
@@ -78,7 +79,25 @@ class DrugDiscoveryAssistantAgent:
                                 - 비교적 빠른 예측이 필요한 경우에도 사용할 수 있습니다.
                 """,
                 "input_file": "fasta",
-            }
+            },
+            {
+                "name": "rfdiffusion_protein_generation",
+                "function_name": self.rfdiffusion_protein_generation,
+                "description": """
+                                RFDiffusion을 사용하여 입력받은 단백질의 Binder 3D 구조를 생성해줘.
+
+                                입력:
+                                - protein_pdb (str): PDB 형식의 3D 구조
+
+                                출력:
+                                - predicted_binder_structure: PDB 형식의 3D 구조 예측 결과
+
+                                사용 조건:
+                                - 단백질 binder 생성 시 사용합니다.
+
+                """,
+                "input_file": "pdb",
+            },
         ]
         self.llm = self._make_llm()
         self.graph = self._create_agent_graph()
@@ -223,6 +242,11 @@ class DrugDiscoveryAssistantAgent:
 
     def add_protein(self, file_name: str):
         """FASTA 파일에서 단백질 시퀀스 로드"""
+        fasta_sequences = SeqIO.parse(open(f"protein/{file_name}"), "fasta")
+        self.state["proteins"] = fasta_sequences
+    
+    def add_3d_protein(self, file_name: str):
+        """PDB 파일에서 단백질 구조 load"""
         fasta_sequences = SeqIO.parse(open(f"protein/{file_name}"), "fasta")
         self.state["proteins"] = fasta_sequences
 
@@ -847,3 +871,65 @@ class DrugDiscoveryAssistantAgent:
 
         return new_state
     
+    def rfdiffusion_protein_generation(self, state: AgentState) -> AgentState:
+        """
+        RFDiffusion을 사용하여 단백질 구조를 생성합니다.
+        AWS Batch를 활용하여 RFDiffusion 작업을 실행합니다. 현재는 "Insulin" Example 만 제공합니다. 향후 contigmap.contigs, ppi.hotspot_res 등의 수정이 필요합니다.
+
+        Parameters
+        ----------
+        state : AgentState
+            현재 에이전트의 상태를 담고 있는 딕셔너리.
+            필수 키:
+            - 'proteins': BioPython SeqRecord 객체의 리스트
+              각 SeqRecord는 다음을 포함:
+              - id: 단백질 식별자
+              - seq: 아미노산 서열
+              - description: 단백질 설명 (선택사항)
+
+        Returns
+        -------
+        AgentState
+            업데이트된 상태 딕셔너리. 다음 키를 포함:
+            - 'current_response': 작업 제출 상태 메시지
+              성공 시: "Insulin binder 예측이 성공했습니다!"
+              실패 시: "Insulin binder 예측이 실패 했습니다."
+        """
+        try:
+            target_id = "BINDER-" + datetime.now().strftime("%Y%m%d%s")
+            target = BatchFoldTarget(target_id=target_id, s3_bucket=self.S3_BUCKET, boto_session=self.boto_session)
+            
+            JOB_QUEUE = "G4dnJobQueue"
+
+            target.upload_pdb("protein/target.pdb")
+            
+            NUM_DESIGNS = 4
+
+            params = {
+                "contigmap.contigs": "[A1-150/0 70-100]", 
+                "ppi.hotspot_res": "[A59,A83,A91]", 
+                "inference.num_designs": NUM_DESIGNS, 
+                "denoiser.noise_scale_ca": 0, 
+                "denoiser.noise_scale_frame": 0,
+            }
+
+            job_name = "RFDiffusionJob" + datetime.now().strftime("%Y%m%d%s")
+
+            rfdiffusion_job = RFDiffusionJob(
+                boto_session=self.boto_session,
+                job_name=job_name,
+                input_s3_uri=os.path.join(target.get_pdbs_s3_uri(), os.path.basename("target.pdb")),
+                output_s3_uri=target.get_predictions_s3_uri() + "/" + job_name,
+                params=params,
+            )
+            print(f"Submitting {job_name}")
+            rfdiffusion_submission = self.batch_environment.submit_job(rfdiffusion_job, job_queue_name=JOB_QUEUE)
+            
+            new_state = state.copy()
+            new_state["current_response"] = f"모든 단백질 binder 생성이 시작되었습니다!\nYour result will be saved in {target.get_predictions_s3_uri() + '/' + job_name}"
+    
+        except Exception as e:
+            new_state = state.copy()
+            new_state["current_response"] = f"단백질 binder 생성이 실패 했습니다.\n에러 메시지: {str(e)}"
+
+        return new_state

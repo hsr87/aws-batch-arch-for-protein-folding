@@ -68,7 +68,7 @@ def handle_file_upload(uploaded_file, file_type, save_to_dynamodb=True):
                        st.session_state.last_uploaded_train != uploaded_file:
                         st.session_state.agent.add_and_save_csv_file(
                             filename,
-                            "Solubility_Training"
+                            "Insulin_Training"
                         )
                         st.session_state.last_uploaded_train = uploaded_file
                         st.success(f"{filename} 파일이 성공적으로 업로드되고 DynamoDB에 저장되었습니다.")
@@ -87,6 +87,16 @@ def handle_file_upload(uploaded_file, file_type, save_to_dynamodb=True):
                 
             st.session_state.agent.add_protein(uploaded_file.name)
             st.success(f"FASTA 파일이 성공적으로 업로드되었습니다.")
+            
+        elif file_type == 'pdb':
+            save_path = Path('protein') / uploaded_file.name
+            save_path.parent.mkdir(exist_ok=True)
+            
+            with open(save_path, 'wb') as f:
+                f.write(uploaded_file.getvalue())
+                
+            st.session_state.agent.add_protein(uploaded_file.name)
+            st.success(f"PDB 파일이 성공적으로 업로드되었습니다.")
             
     except Exception as e:
         st.error(f"파일 업로드 중 오류가 발생했습니다: {str(e)}")
@@ -277,7 +287,7 @@ def display_chat_interface():
             st.markdown("""
             1. **🔍 기본 정보 문의**
                - 단백질과 관련된 기본적인 질문에 답변
-               - 예시: _"EGFR 단백질의 기본 정보를 알려줘"_
+               - 예시: _"Insulin 단백질의 기본 정보를 알려줘"_
             
             2. **📊 분자 특성 예측**
                - Training 데이터와 Test 데이터를 업로드하여 특성 예측
@@ -287,6 +297,10 @@ def display_chat_interface():
             3. **🧬 단백질 구조 예측**
                - FASTA 파일을 업로드하여 AlphaFold2(높은 정확도, MSA 사용) 또는 ESMFold(빠른 속도, MSA 미사용)로 구조 예측
                - 예시: _"첨부한 fasta 파일에 존재하는 단백질 서열의 구조를 예측해줘"_
+               
+            4. **🔗 단백질 binder 생성**
+               - 타겟 단백질의 구조를 바탕으로 결합할 수 있는 단백질 디자인
+               - 예시: _"첨부한 pdb 파일의 단백질과 결합할 수 있는 단백질을 디자인해줘"_
             """)
         
         st.markdown("---")
@@ -319,10 +333,10 @@ def display_chat_interface():
         # 4. 단백질 데이터 섹션
         st.markdown("## 🧬 단백질 데이터")
         uploaded_fasta = st.file_uploader(
-            "단백질 서열 데이터 (FASTA)",
-            type=['fasta', 'fa'],
+            "단백질 서열 또는 구조 데이터",
+            type=['fasta', 'fa', 'pdb'],
             key='fasta',
-            help="구조를 예측할 단백질 서열 데이터"
+            help="구조를 예측할 단백질 서열 데이터 / 단백질 구조 데이터"
         )
         
         st.markdown("---")
@@ -354,46 +368,48 @@ def display_chat_interface():
                     if file:
                         st.success(f"✅ {name} 업로드 완료")
 
-    # 메인 채팅 영역
-    chat_container = st.container()
-    with chat_container:
-        # 채팅 히스토리 표시
+    # 메인 채팅 영역을 두 개의 컨테이너로 분리
+    chat_history = st.container()
+    input_container = st.container()
+
+    # 입력창을 먼저 렌더링하고 비워둠
+    with input_container:
+        input_placeholder = st.empty()
+    
+    # 채팅 히스토리 표시
+    with chat_history:
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
-        
-        # 사용자 입력
+    
+    # 입력창을 placeholder에 위치시킴
+    with input_placeholder:
         if prompt := st.chat_input("메시지를 입력하세요"):
             st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+            with chat_history:
+                with st.chat_message("user"):
+                    st.markdown(prompt)
 
-            # AI 응답 생성 (스트리밍 방식)
-            with st.chat_message("assistant"):
-                response_placeholder = st.empty()
-                full_response = ""
-                
-                # 스트리밍 응답을 위한 처리
-                for response_chunk in st.session_state.agent.chat_stream(prompt):
-                    if response_chunk.get('current_response'):
-                        chunk_text = response_chunk['current_response']
-                        full_response += chunk_text
-                        # 실시간으로 응답 업데이트
-                        response_placeholder.markdown(full_response + "▌")
-                
-                # 최종 응답 표시
-                response_placeholder.markdown(full_response)
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            # AI 응답 생성
+            with chat_history:
+                with st.chat_message("assistant"):
+                    with st.spinner("생각하는 중..."):
+                        response = st.session_state.agent.chat(prompt)
+                        
+                        if response.get('current_response'):
+                            response_text = response['current_response']
+                            st.markdown(response_text)
+                            st.session_state.messages.append({"role": "assistant", "content": response_text})
 
-                # 데이터 분석 결과 시각화 (이전과 동일)
-                if os.path.exists("molecule/test_prediction.csv") and \
-                   os.path.exists("molecule/test_gt.csv") and \
-                   any(keyword in prompt.lower() for keyword in 
-                       ["분자", "상관관계", "correlation", "시각화", "그래프", "plot", "플롯", "결과", "예측"]) and \
-                   not any(keyword in prompt.lower() for keyword in 
-                         ["fasta", "단백질", "alphafold", "알파폴드"]):
-                    with st.expander("예측 결과 시각화", expanded=True):
-                        display_visualization()
+                            # 데이터 분석 결과 시각화 (조건부)
+                            if os.path.exists("molecule/test_prediction.csv") and \
+                               os.path.exists("molecule/test_gt.csv") and \
+                               any(keyword in prompt.lower() for keyword in 
+                                   ["분자", "상관관계", "correlation", "시각화", "그래프", "plot", "플롯", "결과", "예측"]) and \
+                               not any(keyword in prompt.lower() for keyword in 
+                                     ["fasta", "단백질", "alphafold", "알파폴드"]):
+                                with st.expander("예측 결과 시각화", expanded=True):
+                                    display_visualization()
 
 def main():
     st.set_page_config(
