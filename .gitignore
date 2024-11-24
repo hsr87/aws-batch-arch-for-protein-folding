@@ -20,3 +20,4 @@ tests/data/
 data/*
 .scratch
 .ipynb_checkpoints
+build
